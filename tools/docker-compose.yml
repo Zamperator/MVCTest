@@ -1,0 +1,64 @@
+name: mvctest
+services:
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - './etc/nginx:/etc/nginx/conf.d'
+      - '../public:/var/www/public'
+      - '../app:/var/www/app'
+      - '../vendor:/var/www/vendor'
+      - '../config:/var/www/config'
+    ports:
+      - '8080:80'
+    restart: always
+    depends_on:
+      - php
+      - db
+      - mongo
+  php:
+    build: .
+    restart: always
+    volumes:
+      - './etc/php/php.ini:/usr/local/etc/php/conf.d/php.ini'
+      - '../public:/var/www/public'
+      - '../app:/var/www/app'
+      - '../vendor:/var/www/vendor'
+      - '../config:/var/www/config'
+  composer:
+    image: composer
+    volumes:
+      - '../app:/app'
+    command: install --ignore-platform-reqs
+  db:
+    image: mariadb
+    container_name: mariadb
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=mvctest
+      - MYSQL_USER=mvctest
+      - MYSQL_PASSWORD=mvctest
+    ports:
+      - '3306:3306'
+    volumes:
+      - './data/db/mysql:/var/lib/mysql'
+      - './sql:/docker-entrypoint-initdb.d'
+  mongo:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mvctest
+      MONGO_INITDB_ROOT_PASSWORD: mvctest
+    ports:
+      - '27017:27017'
+    volumes:
+      - './data/db/mongo:/data/db'
+  memcached:
+    image: memcached:alpine
+    restart: always
+  redis:
+    image: redis:alpine
+    restart: always
+    ports:
+      - '6379:6379'

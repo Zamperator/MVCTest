@@ -1,0 +1,32 @@
+{
+  "name": "vendor_name/mvc",
+  "description": "description",
+  "minimum-stability": "dev",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "zam",
+      "email": "email@example.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "ZAM\\": "/app/",
+      "App\\": "app"
+    }
+  },
+  "require-dev": {
+    "friendsofphp/php-cs-fixer": "v3.56.1",
+    "phpunit/phpunit": "11",
+    "phpstan/phpstan": "2.0.x-dev"
+  },
+  "require": {
+    "php": "8.3",
+    "ext-pdo": "*",
+    "ext-memcached": "*",
+    "ext-redis": "*",
+    "ext-mongodb": "*",
+    "mongodb/mongodb": "^1.0@dev",
+    "ext-apcu": "*"
+  }
+}
