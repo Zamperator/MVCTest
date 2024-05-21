@@ -63,8 +63,9 @@ Komponenten:
 - PHPStan: Für die statische Code-Analyse
 - PHPUnit: Für die Unit-Tests
 
-## Anmerkung
+## Anmerkungen
 - Die Komponenten Utils, PageSetup und Registry wurden aus einem älteren Projekt übernommen und für die Verwendung in diesem Framework angepasst.
+- composer installationen benötigen `--ignore-platform-reqs`, da die aktuelle PHP-Version 8.3.7 bisher nicht offiziell unterstützt wird.
 
 ## TODO
 - Eine Menge :p
