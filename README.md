@@ -49,7 +49,7 @@ Dies stellt sicher, dass die Anwendung in einer konsistenten Umgebung läuft, un
 Aktuell:
 - PHP 8.3
 - mariadb
-- mogodb
+- mongodb
 - Redis
 - Memcached
 - Nginx
@@ -59,6 +59,7 @@ Aktuell:
 ## Composer
 - Das Projekt verwendet Composer zur Verwaltung von Abhängigkeiten und zum Autoloading von Klassen und des Projekts an sich.
 Komponenten:
+- PHP CS Fixer: Für die Code-Formatierung
 - PHPSniffer: Für die Code-Qualität
 - PHPStan: Für die statische Code-Analyse
 - PHPUnit: Für die Unit-Tests
@@ -69,13 +70,14 @@ Komponenten:
 
 ## TODO
 - Eine Menge :p
-  - Javascript Framework integrierten, bspw. Vue.js oder Angular
-  - Authentifizierung hinzufügen
+  - Javascript Framework integrierten, bsp. Vue.js, Angular oder React
   - Datenbank-Integration
+  - Internationalisierung
+  - Authentifizierung hinzufügen
+  - Module Loading hinzufügen
   - Validierungen
   - Logging
-  - Caching
-  - Internationalisierung
+  - Caching 
   - Installationsskript/Prozess
   - Tests schreiben
   - Refactoring
