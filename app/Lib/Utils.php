@@ -186,10 +186,10 @@ class Utils
                 $return[$key] = self::object2array($value);
             }
         } else {
-            $var = (is_object($input)) ? get_object_vars($input) : [];
+            $varList = (is_object($input)) ? get_object_vars($input) : [];
 
-            if ($var) {
-                foreach ($var as $key => $value) {
+            if ($varList) {
+                foreach ($varList as $key => $value) {
                     $key = str_replace(':protected', '', $key);
                     $return[$key] = ($key && !$value) ? null : self::object2array($value);
                 }
@@ -240,15 +240,6 @@ class Utils
         if ($timeout > 0) {
             setcookie($cookieName, $cookieValue, $timeout, '/', $domain, true, true);
         }
-    }
-
-    /**
-     * @param string $salt
-     * @return string
-     */
-    public static function getAccessToken(string $salt = ''): string
-    {
-        return self::getClientAccessToken($salt);
     }
 
     /**
