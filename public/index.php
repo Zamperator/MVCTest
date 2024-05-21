@@ -28,8 +28,12 @@ $router->middleware(new ErrorHandlerMiddleware());
 $router->middleware(new UserHandler());
 
 // Routes and Logic
-// TODO: Add a route loader, to load the correct route for each subdomain etc.
-require_once __DIR__ . '/../app/Routes/default.php';
+// TODO: Add a dynamic route loader, to load the correct route for each subdomain etc.
+if ($_SERVER['HTTP_HOST'] !== 'test.local') {
+    require_once __DIR__ . '/../app/Routes/default.php';
+} else {
+    require_once __DIR__ . '/../app/Routes/project.php';
+}
 
 // Additional code e.g. for sessions and stuff
 

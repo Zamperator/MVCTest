@@ -5,3 +5,16 @@
 .php-cs-fixer.cache
 /node_modules
 /tools/data
+/app/Controllers/*
+/app/Models/*
+/app/Views/*
+/app/Middleware/*
+/app/Routes/*
+/public/*
+# Do not ignore test files
+!/public/index.php
+!/app/Controllers/IndexController.php
+!/app/Models/IndexModel.php
+!/app/Views/Index/*
+!/app/Routes/default.php
+!/app/Middleware/ErrorHandlerMiddleware.php

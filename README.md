@@ -28,12 +28,12 @@ Routen mit Platzhaltern zu definieren.
 require_once __DIR__ . '/vendor/autoload.php';
 
 use App\Lib\Router;
-use App\Controllers\HomeController;
+use App\Controllers\IndexController;
 use App\Controllers\UserController;
 
 $router = new Router();
 
-$router->get('/', [HomeController::class, 'index']); // Root URL
+$router->get('/', [IndexController::class, 'index']); // Root URL
 $router->get('user/{id}', [UserController::class, 'show']); // /user/123 URL
 
 $router->middleware(function () {
@@ -69,16 +69,15 @@ Komponenten:
 - composer installationen benötigen `--ignore-platform-reqs`, da die aktuelle PHP-Version 8.3.7 bisher nicht offiziell unterstützt wird.
 
 ## TODO
-- Eine Menge :p
-  - Javascript Framework integrierten, bsp. Vue.js, Angular oder React
-  - Datenbank-Integration
-  - Internationalisierung
-  - Authentifizierung hinzufügen
-  - Module Loading hinzufügen
-  - Validierungen
-  - Logging
-  - Caching 
-  - Installationsskript/Prozess
-  - Tests schreiben
-  - Refactoring
-  - ...
+- Javascript-Framework integrierten, bsp. Vue.js, Angular oder React
+- Datenbank-Integration
+- Internationalisierung
+- Authentifizierung hinzufügen
+- Module Loading hinzufügen
+- Validierungen
+- Logging
+- Caching 
+- Installationsskript/Prozess
+- Tests
+- Refactoring
+- ... und vieles mehr
