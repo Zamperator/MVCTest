@@ -102,6 +102,17 @@ const PROJECT_CONFIG = [
     'php' => [// Defines the default timezone used by the date functions
     ],
     /*************************************************************
+     * Rabbit MQ
+     *************************************************************/
+    'rabbitmq' => [
+        'active' => false,
+        'host' => 'rabbitmq',
+        'requestPort' => 5672,
+        'managementPort' => 15672,
+        'user' => '...',
+        'password' => '...',
+    ],
+    /*************************************************************
      * TWITCH API Settings
      *************************************************************/
     'twitch' => [

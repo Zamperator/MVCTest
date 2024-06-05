@@ -6,7 +6,10 @@ use App\Lib\Registry;
 use App\Lib\Utils;
 
 /**
- * Class Factory
+ * @uses Registry
+ * @package App\Lib\Cache
+ * @version 1.0
+ * @since 1.0
  */
 abstract class Factory
 {

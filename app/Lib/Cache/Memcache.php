@@ -7,7 +7,12 @@ use Exception;
 use Memcached;
 
 /**
- * Class Memcache
+ * @uses Factory
+ * @uses Methods
+ * @package App\Lib\Cache
+ * @version 1.0
+ * @since 1.0
+ * @see https://www.php.net/manual/de/book.memcached.php
  */
 class Memcache extends Factory implements Methods
 {

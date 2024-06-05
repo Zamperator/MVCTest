@@ -15,6 +15,8 @@ services:
       - php
       - db
       - mongo
+      - rabbitmq
+      - elasticsearch
   php:
     build: .
     restart: always
@@ -24,6 +26,11 @@ services:
       - '../app:/var/www/app'
       - '../vendor:/var/www/vendor'
       - '../config:/var/www/config'
+    depends_on:
+      - db
+      - mongo
+      - rabbitmq
+      - elasticsearch
   composer:
     image: composer
     volumes:
@@ -47,6 +54,7 @@ services:
     image: mongo:latest
     container_name: mongodb
     restart: always
+    command: --serviceExecutor adaptive
     environment:
       MONGO_INITDB_ROOT_USERNAME: mvctest
       MONGO_INITDB_ROOT_PASSWORD: mvctest
@@ -62,3 +70,27 @@ services:
     restart: always
     ports:
       - '6379:6379'
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    environment:
+      - RABBITMQ_DEFAULT_USER=mvctest
+      - RABBITMQ_DEFAULT_PASS=mvctest
+    volumes:
+      - './data/rabbitmq:/var/lib/rabbitmq'
+    restart: always
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.12.1
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - '9200:9200'
+      - '9300:9300'
+    volumes:
+      - ./data/elasticsearch:/usr/share/elasticsearch/data
+    restart: always

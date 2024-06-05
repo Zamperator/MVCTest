@@ -51,7 +51,6 @@ Aktuell:
 - mariadb
 - mongodb
 - Redis
-- Memcached
 - Nginx
 - Composer
 - Xdebug (deaktiviert)
@@ -63,6 +62,7 @@ Komponenten:
 - PHPSniffer: Für die Code-Qualität
 - PHPStan: Für die statische Code-Analyse
 - PHPUnit: Für die Unit-Tests
+- RabbitMQ: Für die Message-Queue
 
 ## Anmerkungen
 - Die Komponenten Utils, PageSetup und Registry wurden aus einem älteren Projekt übernommen und für die Verwendung in diesem Framework angepasst.
@@ -70,7 +70,8 @@ Komponenten:
 
 ## TODO
 - Javascript-Framework integrierten, bsp. Vue.js, Angular oder React
-- Datenbank-Integration
+- ~~Datenbank-Integration~~
+- Twig als Template-Engine integrieren
 - Internationalisierung
 - Authentifizierung hinzufügen
 - Module Loading hinzufügen

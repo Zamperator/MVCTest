@@ -5,7 +5,11 @@ namespace App\Lib\Cache;
 use Exception;
 
 /**
- * Class Redis
+ * @uses Methods
+ * @package App\Lib\Cache
+ * @version 1.0
+ * @since 1.0
+ * @see https://redis.io/
  */
 class Redis extends Factory implements Methods
 {

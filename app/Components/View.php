@@ -7,7 +7,9 @@ use App\Lib\Registry;
 use App\Lib\Utils;
 
 /**
- *
+ * @package App\Components
+ * @version 1.0
+ * @since 1.0
  */
 class View
 {
@@ -175,7 +177,7 @@ class View
         $ds = DIRECTORY_SEPARATOR;
 
         // the view path
-        $defaultPath = self::UrlContent('~/Views/') . $ds . $this->_controller . $ds . $this->_action . '.php';
+        $defaultPath = self::UrlContent('~/Views/') . $ds . $this->_controller . $ds . $this->_action . '.phtml';
 
         // start buffering
         ob_start();

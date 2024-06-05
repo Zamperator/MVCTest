@@ -11,11 +11,10 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     libfreetype6-dev \
     libmcrypt-dev \
-    libmongodb-dev \
     libcurl4-openssl-dev \
     libonig-dev
 
-RUN docker-php-ext-install mysqli pdo pdo_mysql mongodb bcmath gd mbstring curl
+RUN docker-php-ext-install mysqli pdo pdo_mysql bcmath gd mbstring curl
 RUN pecl install memcached
 RUN pecl install mongodb
 RUN docker-php-ext-enable pdo pdo_mysql memcached mongodb curl gd mbstring bcmath

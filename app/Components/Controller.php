@@ -11,6 +11,11 @@ use Exception;
 
 // Add all available Models here
 
+/**
+ * @package App\Components
+ * @version 1.0
+ * @since 1.0
+ */
 abstract class Controller
 {
     // abstract protected function init();

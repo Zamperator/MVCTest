@@ -7,7 +7,10 @@
 namespace App\Lib;
 
 /**
- *
+ * @uses Utils
+ * @package App\Lib
+ * @version 1.0
+ * @since 1.0
  */
 class PageSetup
 {

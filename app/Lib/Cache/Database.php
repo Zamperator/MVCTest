@@ -8,7 +8,12 @@ use PDO;
 use PDOException;
 
 /**
- *
+ * @uses Factory
+ * @uses Methods
+ * @package App\Lib\Cache
+ * @version 1.0
+ * @since 1.0
+ * @see https://www.php.net/manual/de/book.pdo.php
  */
 class Database extends Factory implements Methods
 {
