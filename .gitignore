@@ -16,6 +16,7 @@
 !/public/index.php
 !/app/Controllers/IndexController.php
 !/app/Models/IndexModel.php
+!/app/Models/UserModel.php
 !/app/Views/Index/*
 !/app/Routes/default.php
 !/app/Middleware/ErrorHandlerMiddleware.php
