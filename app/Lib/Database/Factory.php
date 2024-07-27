@@ -2,7 +2,6 @@
 
 namespace App\Lib\Database;
 
-use App\Lib\Registry;
 use PDO;
 use PDOException;
 
@@ -11,23 +10,17 @@ abstract class Factory
     protected PDO $connection;
 
     /**
-     * @param string $connectionName
+     * @param array $config
      * @return void
      */
-    public function connect(string $connectionName = 'mysql'): void
+    public function connect(array $config): void
     {
-        $config = Registry::get('config');
-
-        if (!isset($config['db']['connection'])) {
-            return;
-        }
-
-        if (!isset($config['db']['connection'][$connectionName])) {
+        if (empty($config)) {
             die('Unknown connection');
         }
 
-        $dsn = $config['db']['connection'][$connectionName]['dsn'];
-        $databaseName = $config['db']['connection'][$connectionName]['database'];
+        $dsn = $config['dsn'];
+        $databaseName = $config['database'];
         if($databaseName) {
             $dsn = preg_replace('/;?dbname=[^;]+/', '', $dsn);
             $dsn .= ';dbname=' . $databaseName;
@@ -36,11 +29,18 @@ abstract class Factory
         try {
             $this->connection = new PDO(
                 $dsn,
-                $config['db']['connection'][$connectionName]['username'],
-                $config['db']['connection'][$connectionName]['password']
+                $config['username'],
+                $config['password']
             );
         } catch (PDOException $e) {
             exit('Connection failed: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * @return PDO
+     */
+    public function get() : PDO {
+        return $this->connection;
     }
 }

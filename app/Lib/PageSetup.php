@@ -99,9 +99,9 @@ class PageSetup
 
     /**
      * @param string $file
-     * @return string|int
+     * @return int|string
      */
-    private function getVersion(string $file = ''): string|int
+    private function getVersion(string $file = ''): int|string
     {
         return (strlen($file) > 3 && is_file('.' . $file)) ? filemtime('.' . $file) : '1.0';
     }

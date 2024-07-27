@@ -2,39 +2,42 @@
 
 namespace App\Lib;
 
-/**
- * @package App\Lib
- * @version 1.0
- * @since 1.0
- */
-class Router
+use App\Lib\Exceptions\ResourceNotFound;
+
+final class Router
 {
     protected array $routes = [];
     protected array $middleware = [];
 
-    /**
-     * @param string $route
-     * @param array $callback
-     * @return void
-     */
-    public function get(string $route, array $callback): void
+    public function get(string $route, array $callback): Route
     {
-        // Umgebe den Methodenaufruf mit einer Closure
-        $handler = function ($params = []) use ($callback) {
-            $controllerClass = $callback[0];
-            $method = $callback[1];
-            $controller = new $controllerClass();
-            call_user_func_array([$controller, $method], $params);
-        };
-
-        $route = $this->convertToRegex($route);
-        $this->routes['GET'][$route] = $handler;
+        return $this->addRoute(__FUNCTION__, $route, $callback);
     }
 
-    /**
-     * @param $middleware
-     * @return void
-     */
+    public function post(string $route, array $callback): Route
+    {
+        return $this->addRoute(__FUNCTION__, $route, $callback);
+    }
+
+    public function put(string $route, array $callback): Route
+    {
+        return $this->addRoute(__FUNCTION__, $route, $callback);
+    }
+
+    public function delete(string $route, array $callback): Route
+    {
+        return $this->addRoute(__FUNCTION__, $route, $callback);
+    }
+
+    private function addRoute(string $method, string $route, array $callback): Route
+    {
+        $handler = new Route($callback);
+        $route = $this->convertToRegex($route);
+        $this->routes[strtoupper($method)][$route] = $handler;
+
+        return $handler;
+    }
+
     public function middleware($middleware): void
     {
         $this->middleware[] = $middleware;
@@ -43,50 +46,96 @@ class Router
     /**
      * @return void
      */
-    private function notFound(): void
+    public function notFound(): void
     {
-        http_response_code(404);
-        exit("404 - Page not found");
+        ErrorHandler::exception(new ResourceNotFound('Route not found.'));
     }
 
-    /**
-     * Convert route to regex
-     * @param string $route
-     * @return string
-     */
     private function convertToRegex(string $route): string
     {
-        $route = preg_replace('#\{[a-zA-Z]+}#', '([a-zA-Z0-9_\-]+)', $route);
-        return '#^' . str_replace('/', '\/', $route) . '$#';
+        $route = preg_replace_callback('#\{([a-zA-Z_-][a-zA-Z0-9_-]*)(?::(int|alpha|alnum))?}#', function ($matches) {
+            $param = $matches[1];
+            $type = $matches[2] ?? 'alnum';
+
+            switch ($type) {
+                case 'int':
+                    return '(?P<' . preg_quote($param) . '>\d+)';
+                case 'alpha':
+                    return '(?P<' . preg_quote($param) . '>[a-zA-Z]+)';
+                case 'alnum':
+                default:
+                    return '(?P<' . preg_quote($param) . '>[\w-]+)';
+            }
+        }, $route);
+
+        return '#^' . str_replace('/', '\/', $route) . '\/?$#';
     }
 
     /**
      * @return void
+     * @throws ResourceNotFound
      */
     public function dispatch(): void
     {
+        $response = new Response(); // Response-Objekt
+
         $method = $_SERVER['REQUEST_METHOD'] ?? '';
         $uri = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
         $uri = '/' . trim($uri, '/');
 
-        foreach ($this->middleware as $middleware) {
-            if (is_callable($middleware)) {
-                call_user_func($middleware);
-            }
-        }
+        $request = $_SERVER; // Einfaches Request-Objekt
 
-        foreach ($this->routes[$method] as $route => $callback) {
+        foreach ($this->routes[$method] as $route => $handler) {
             if (preg_match($route, $uri, $matches)) {
                 array_shift($matches); // Entfernt das vollständige Match
-                if (is_callable($callback)) {
-                    call_user_func($callback, $matches);
-                } else {
-                    $this->notFound();
+
+                // Extrahiere benannte Matches
+                $params = [];
+                foreach ($matches as $key => $value) {
+                    if (is_string($key)) {
+                        $params[$key] = $value;
+                        $_GET[$key] = $value;
+                    }
                 }
-                return;
+
+                $callback = $handler->callback;
+
+                // Erstelle Middleware-Pipeline
+                $middlewares = array_merge($this->middleware, $handler->middleware);
+                $middlewarePipeline = $this->createMiddlewarePipeline($middlewares, function($request, $response) use ($callback, $params) {
+                    if (is_callable($callback)) {
+                        $controller = new $callback[0]();
+                        $method = $callback[1];
+                        return call_user_func_array([$controller, $method], $params);
+                    } else {
+                        $this->notFound();
+                        return null; // Exception werfen, falls die Route nicht gefunden wurde
+                    }
+                });
+
+                // Middleware-Pipeline durchlaufen
+                $response = $middlewarePipeline($request, $response);
+
+                // Antwort senden
+                if( method_exists($response, 'send')) {
+                    $response->send();
+                }
+                return; // Ausführung abbrechen, sobald eine Route gefunden wurde
             }
         }
 
         $this->notFound();
+    }
+
+    protected function createMiddlewarePipeline($middlewares, $controllerCallback)
+    {
+        $next = $controllerCallback;
+        while ($middleware = array_pop($middlewares)) {
+            $next = function($request, $response) use ($middleware, $next) {
+                $middlewareInstance = new $middleware();
+                return $middlewareInstance->handle($request, $response, $next);
+            };
+        }
+        return $next;
     }
 }

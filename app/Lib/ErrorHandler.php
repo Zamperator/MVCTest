@@ -4,7 +4,7 @@ namespace App\Lib;
 
 use ErrorException;
 
-class ErrorHandler
+final class ErrorHandler
 {
     /**
      * @throws ErrorException
@@ -20,14 +20,29 @@ class ErrorHandler
      */
     public static function exception($exception): void
     {
-        // Set the HTTP response code
-        // http_response_code(500);
-
+        $json = new Json();
         // Output the error message
-        echo "Error: " . $exception->getMessage() . PHP_EOL;
-        echo $exception->getTraceAsString();
-
-        // More...
+        if (!defined('DEBUG')) {
+            $json->error(
+                'Error',
+                $exception->getMessage(),
+                '',
+                $exception->getCode(),
+                $_SERVER['REQUEST_URI']
+            );
+        } else {
+            $json->error(
+                'Error',
+                $exception->getMessage(),
+                [
+                    'File' => $exception->getFile(),
+                    'Line', $exception->getLine(),
+                    'stack' => $exception->getTrace(),
+                ],
+                $exception->getCode(),
+                $_SERVER['REQUEST_URI'],
+            );
+        }
     }
 
     /**
@@ -38,7 +53,9 @@ class ErrorHandler
         $error = error_get_last();
 
         if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
-            self::exception(new ErrorException($error['message'], 0, $error['type'], $error['file'], $error['line']));
+            self::exception(
+                new ErrorException($error['message'], 0, $error['type'], $error['file'], $error['line'])
+            );
         }
     }
 }

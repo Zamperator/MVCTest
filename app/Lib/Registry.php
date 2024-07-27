@@ -3,9 +3,7 @@
 namespace App\Lib;
 
 /**
- * @package App\Lib
- * @version 1.0
- * @since 1.0
+ *
  */
 class Registry
 {
@@ -19,7 +17,7 @@ class Registry
      * @param mixed $data
      * @return void
      */
-    public static function set(string $index, mixed $data): void
+    public static function set(string $index, $data): void
     {
         self::$dataStore[$index] = $data;
     }
@@ -29,7 +27,7 @@ class Registry
      * @param string $subIndex
      * @return mixed
      */
-    public static function get(string $index = '', string $subIndex = ''): mixed
+    public static function get(string $index = '', string $subIndex = '')
     {
         return ($subIndex) ? self::$dataStore[$index][$subIndex] ?? false : self::$dataStore[$index] ?? false;
     }

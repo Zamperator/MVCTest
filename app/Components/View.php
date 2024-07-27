@@ -3,29 +3,33 @@
 
 namespace App\Components;
 
+use App\Lib\L8N;
 use App\Lib\Registry;
 use App\Lib\Utils;
 
 /**
- * @package App\Components
- * @version 1.0
- * @since 1.0
+ *
  */
 class View
 {
-
     protected array $_variables = [];
     protected string $_controller;
     protected string $_action;
     protected string $_bodyContent;
 
     public string $viewPath;
+    public string $language;
     public array $section = [];
     public array $breadcrumb = [];
     public bool $doOutput = true;
     public string $pageTitle;
     public string $layout;
-    public mixed $pageSetup;
+    public $pageSetup;
+
+    public L8N $l8n;
+    public Utils $utils;
+    public string $url;
+    public string $domain;
 
     /**
      * Template constructor.
@@ -39,6 +43,12 @@ class View
         $this->setAction($action);
 
         $this->pageSetup = Registry::get('pageSetup');
+        $this->language = Registry::get('language');
+        $this->l8n = new L8N();
+
+        $this->url = Registry::get('url');
+        $this->domain = preg_replace('#^[^.]+\.(.*)$#', '\1', $this->url);
+        $this->utils = new Utils();
     }
 
     /**
@@ -64,7 +74,7 @@ class View
      * @param mixed $value
      * @return void
      */
-    public function set(string $name, mixed $value): void
+    public function set(string $name, $value): void
     {
         $this->_variables[$name] = $value;
     }
@@ -77,11 +87,7 @@ class View
     {
         if (!empty($toSet)) {
             foreach ($toSet as $name => $value) {
-                if (is_array($value)) {
-                    $this->setMultiple($value);
-                } else {
-                    $this->set($name, $value);
-                }
+                $this->set($name, $value);
             }
         }
     }
@@ -109,7 +115,7 @@ class View
      * @param mixed $value
      * @return void
      */
-    public function setSection(string $section, mixed $value): void
+    public function setSection(string $section, $value): void
     {
         $this->section[$section] = $value;
     }
@@ -126,38 +132,21 @@ class View
     }
 
     /**
-     * @param $name
-     * @return mixed
+     * @param $meta
+     * @return string
      */
-    public function getVar($name): mixed
+    public function getMeta($meta): string
     {
-        return $this->_variables[$name] ?? null;
+        return $this->l8n::_('meta-' . $meta);
     }
 
     /**
-     * @param string $path
-     * @param string $sub
-     * @return string
+     * @param $name
+     * @return mixed
      */
-    public static function UrlContent(string $path = '', string $sub = 'app'): string
+    public function getVar($name)
     {
-        $ds = DIRECTORY_SEPARATOR;
-
-        if (str_starts_with($path, '~')) {
-            $path = preg_replace('#\\\/#', $ds, $path);
-            $path = preg_replace(
-                '#(\\\\' . preg_quote($ds) . '){2,}#',
-                $ds,
-                preg_replace(
-                    '#~#',
-                    $_SERVER['DOCUMENT_ROOT'] . '/../' . $sub . (str_starts_with($path, '~/') ? '' : $ds),
-                    $path
-                )
-            );
-            $path = realpath($path);
-        }
-
-        return $path;
+        return $this->_variables[$name] ?? null;
     }
 
     /**
@@ -177,7 +166,7 @@ class View
         $ds = DIRECTORY_SEPARATOR;
 
         // the view path
-        $defaultPath = self::UrlContent('~/Views/') . $ds . $this->_controller . $ds . $this->_action . '.phtml';
+        $defaultPath = Utils::UrlContent('~/Views/') . $ds . $this->_controller . $ds . $this->_action . '.phtml';
 
         // start buffering
         ob_start();
@@ -191,7 +180,7 @@ class View
         // check if we have any layout defined
         if (!empty($this->layout) && (!Utils::isAjaxCall())) {
             // we need to check the path contains app prefix (~)
-            $this->layout = self::UrlContent($this->layout);
+            $this->layout = Utils::UrlContent($this->layout);
             // include the template
             include $this->layout;
         } else {

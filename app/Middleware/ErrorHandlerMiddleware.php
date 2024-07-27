@@ -2,22 +2,23 @@
 
 namespace App\Middleware;
 
-use Exception;
+use App\Lib\ErrorHandler;
 
 class ErrorHandlerMiddleware
 {
     /**
      * @param $request
+     * @param $response
      * @param $next
-     * @return mixed|void
+     * @return mixed
      */
-    public function handle($request, $next)
+    public function handle($request, $response, $next): mixed
     {
-        try {
-            return $next($request);
-        } catch (Exception $exception) {
-            echo "Middleware Error: " . $exception->getMessage();
-            exit;
-        }
+        // Register error handling
+        set_error_handler([ErrorHandler::class, 'error']);
+        set_exception_handler([ErrorHandler::class, 'exception']);
+        register_shutdown_function([ErrorHandler::class, 'shutdown']);
+
+        return $next($request, $response);
     }
 }

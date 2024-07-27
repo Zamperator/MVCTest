@@ -6,7 +6,5 @@ use App\Components\Model;
 
 class ProfileModel extends Model
 {
-    public function __construct()
-    {
-    }
+
 }

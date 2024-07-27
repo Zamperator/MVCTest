@@ -3,17 +3,21 @@
 
 namespace App\Lib;
 
+use App\Lib\Exceptions\UserError;
+use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use Throwable;
+
 /**
- * @package App\Lib
- * @version 1.0
- * @since 1.0
+ *
  */
 class Utils
 {
 
     const bool LOGGING = false;
-    const string LOG_FILE = '../upload/debug.log';
-    const int CACHE_VALUE = 1;
+    const string LOG_FILE = '../tmp/kinocheck-api.log';
+    const string CACHE_VALUE = '0.0.1';
 
     const string CLIENT_KEY_SALT = '';
 
@@ -22,7 +26,33 @@ class Utils
      */
     public static function isDeveloper(): bool
     {
-        return defined('IS_DEVELOPMENT');
+        return defined('IS_DEVELOPMENT') || defined('DEBUG');
+    }
+
+    /**
+     * @param string $path
+     * @param string $sub
+     * @return string
+     */
+    public static function UrlContent(string $path = '', string $sub = 'app'): string
+    {
+        $ds = DIRECTORY_SEPARATOR;
+
+        if (str_starts_with($path, '~')) {
+            $path = preg_replace('#\\\/#', $ds, $path);
+            $path = preg_replace(
+                '#(\\\\' . preg_quote($ds) . '){2,}#',
+                $ds,
+                preg_replace(
+                    '#~#',
+                    $_SERVER['DOCUMENT_ROOT'] . '/' . $sub . (substr($path, 0, 2) == '~/' ? '' : $ds),
+                    $path
+                )
+            );
+            $path = realpath($path);
+        }
+
+        return $path;
     }
 
     /**
@@ -31,14 +61,39 @@ class Utils
      */
     public static function getScriptCache(string $filePath = ''): string
     {
-        if (preg_match('#^/?(js|css)/.*\.(css|js)$#', $filePath) && is_file($filePath)) {
-            return '?' . (self::isDeveloper() ? filemtime($filePath) : self::CACHE_VALUE);
+        if (preg_match('#(js|css)/.*\.(css|js)$#', $filePath)) {
+            return '?_v=' . (self::isDeveloper() ? filemtime($filePath) : self::CACHE_VALUE);
         }
 
         return '';
     }
 
     /**
+     * @param string $filePath
+     * @return string
+     */
+    public static function getScriptTag(string $filePath): string
+    {
+        $root = $_SERVER['DOCUMENT_ROOT'] . '/public';
+
+        if (preg_match('#^/css/.*\.css$#', $filePath)) {
+            $realPath = $root . $filePath;
+            if (is_file($realPath)) {
+                return '<link rel="stylesheet" href="' . $filePath . self::getScriptCache($realPath) . '">';
+            }
+        }
+        if (preg_match('#^/js/.*\.js$#', $filePath)) {
+            $realPath = $root . $filePath;
+            if (is_file($realPath)) {
+                return '<script src="' . $filePath . self::getScriptCache($realPath) . '"></script>';
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * @TODO: Replace with real Logger
      * @param array $data
      * @param string $type
      * @return void
@@ -157,7 +212,7 @@ class Utils
      * @param mixed $input
      * @return array|string
      */
-    public static function Char2Utf8(mixed $input): array|string
+    public static function Char2Utf8($input)
     {
         if (is_array($input)) {
 
@@ -177,7 +232,7 @@ class Utils
      * @param array|object $input
      * @return array|object
      */
-    public static function object2array(array|object $input): array|object
+    public static function object2array($input)
     {
 
         $return = [];
@@ -248,15 +303,6 @@ class Utils
      * @param string $salt
      * @return string
      */
-    public static function getRequestToken(string $salt = ''): string
-    {
-        return self::getClientAccessToken($salt);
-    }
-
-    /**
-     * @param string $salt
-     * @return string
-     */
     public static function getClientAccessToken(string $salt = ''): string
     {
         $date = date('Y-m-d H', TIME_NOW);
@@ -273,36 +319,98 @@ class Utils
     }
 
     /**
-     * TODO: Try not tu use this ... Switch it to smtp
-     * TODO: Add content validation to prevent spam / hacks
-     *
+     * @param int $length
+     * @param bool $simple
+     * @return string
+     */
+    public static function getRandomString(int $length = 10, bool $simple = false): string
+    {
+        if ($simple) {
+            $pool = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        } else {
+            $pool = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%/=+_$';
+        }
+        return substr(str_shuffle(str_repeat($pool, ceil($length / strlen($pool)))), 0, $length);
+    }
+
+    /**
+     * @param $data
+     * @return string
+     * @throws \Random\RandomException
+     */
+    static function uuid($data = null): string
+    {
+
+        // Generate 16 bytes (128 bits) of random data or use the data passed into the function.
+        $data = $data ?? random_bytes(16);
+        assert(strlen($data) == 16);
+
+        // Set version to 0100
+        $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
+        // Set bits 6-7 to 10
+        $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
+
+        // Output the 36 character UUID.
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+    }
+
+    /**
      * @param string $recipient
      * @param string $subject
      * @param string $content
      * @param string $type
      * @return bool
+     * @throws UserError
      */
     public static function sendMail(string $recipient = '', string $subject = '', string $content = '', string $type = 'plain'): bool
     {
-
         $cfg = Registry::get('config')['site'];
+        $smtpConfig = Registry::get('config')['smtp'];
 
         if (!($recipient && $subject && $content && $cfg['email_sender'])) {
-            return false;
+            throw new UserError('Missing email details: ' . $cfg['email_sender'] . ' ' . $smtpConfig['host']);
         }
 
-        // Additional header
-        $sHeader = 'MIME-Version: 1.0' . "\r\n";
-        $sHeader .= 'Content-type: text/' . (($type == 'html') ? 'html' : 'plain') . '; charset=utf-8' . "\r\n";
-        $sHeader .= 'From: ' . $cfg['site']['name'] . ' <' . $cfg['email_sender'] . '>' . "\r\n";
-        $sHeader .= "Subject: $subject\r\n";
-        $sHeader .= "X-Mailer: PHP/" . PHP_VERSION;
+        if (!filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
+            throw new UserError('Invalid email');
+        }
 
-        if ($type == 'html') {
+        try {
+            $mail = new PHPMailer(true);
+
+            $mail->SMTPDebug = SMTP::DEBUG_OFF;
+            $mail->isSMTP();
+            $mail->Host = $smtpConfig['host'];
+            $mail->SMTPAuth = true;
+            $mail->Username = $smtpConfig['username'];
+            $mail->Password = $smtpConfig['password'];
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+            $mail->Port = 465;
+            $mail->XMailer = null;
+            $mail->CharSet = 'UTF-8';
+            $mail->Encoding = 'base64';
+
+            //Recipients
+            $mail->setFrom($cfg['email_sender'], $cfg['email_sender_name']);
+            $mail->addAddress($recipient);
+            $mail->addReplyTo($cfg['email_sender'], $cfg['email_sender_name']);
+
+            // Content
+            if ($type == 'html') {
+                $mail->isHTML(true);
+            }
             $content = nl2br($content);
+
+            $mail->Subject = $subject;
+            $mail->Body = $content;
+
+            $mail->send();
+
+        } catch (Throwable $e) {
+            throw new \Exception('SMTP error', 0, $e);
         }
 
-        return @mail($recipient, $subject, $content, $sHeader);
+        return true;
     }
 
     /**
@@ -333,6 +441,10 @@ class Utils
      */
     public static function formatTime(int $timestamp = 0): string
     {
+        $formatNum = function ($num) {
+            return ($num < 10) ? '0' . $num : $num;
+        };
+
         $aDate = [];
 
         $secondsInAMinute = 60;
@@ -361,16 +473,16 @@ class Utils
         $timeList = [];
 
         if ($hours > 0) {
-            $timeList[] = $hours;
+            $timeList[] = $formatNum($hours) . 'h';
         }
         if ($minutes > 0) {
-            $timeList[] = $minutes;
+            $timeList[] = $formatNum($minutes) . 'm';
         }
-        if ($hours > 0) {
-            $timeList[] = $seconds;
+        if ($seconds > 0) {
+            $timeList[] = $formatNum($seconds) . 's';
         }
 
-        $aDate[] = implode(':', $timeList);
+        $aDate[] = implode('', $timeList);
 
         return implode(' ', $aDate);
     }

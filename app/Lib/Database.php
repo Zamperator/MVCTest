@@ -3,6 +3,7 @@
 namespace App\Lib;
 
 use Exception;
+use PDO;
 
 /**
  * @uses Cache
@@ -10,24 +11,24 @@ use Exception;
  * @version 1.0
  * @since 1.0
  */
-class Database
+final class Database
 {
     /**
-     * @param $type
+     * @param array $connectionData
      * @return mixed
      * @throws Exception
      */
-    public static function get($type): mixed
+    public static function get(array $connectionData): PDO
     {
-        $databaseClass = 'App\Lib\Database\\' . ucfirst($type);
+        $databaseClass = 'App\Lib\Database\\' . ucfirst($connectionData['type']);
 
         if (!class_exists($databaseClass)) {
             throw new Exception('Class ' . $databaseClass . ' not found');
         }
 
         $database = new $databaseClass();
-        $database->connect($type);
+        $database->connect($connectionData);
 
-        return $database;
+        return $database->get();
     }
 }
